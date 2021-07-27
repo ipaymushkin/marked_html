@@ -3,6 +3,8 @@ import PropTypes from "prop-types";
 import "./styles.css";
 import Mark from "mark.js/src/vanilla";
 
+const colorBoxHeight = 4;
+
 const createHtml = (html) => {
   if (typeof html === "string") {
     return html;
@@ -27,12 +29,17 @@ const MarkedHtml = ({html: htmlProp, rules}) => {
 
   const [sizes, setSizes] = useState({
     documentHeight: 0,
+    documentWidth: 0,
     wrapperHeight: 0,
     scrollPlace: {
       top: 0,
       height: 0,
     },
     scrollBoxHeight: 0,
+    findingBox: {
+      width: 0,
+      height: 0,
+    },
   });
 
   useEffect(() => {
@@ -55,9 +62,14 @@ const MarkedHtml = ({html: htmlProp, rules}) => {
 
   useEffect(() => {
     if (sizes.wrapperHeight && sizes.documentHeight) {
+      const scrollBoxHeight = scrollBoxRef.current.getBoundingClientRect().height;
       setSizes((state) => ({
         ...state,
-        scrollBoxHeight: scrollBoxRef.current.getBoundingClientRect().height,
+        scrollBoxHeight,
+        findingBox: {
+          width: documentRef.innerWidth / 5,
+          height: state.wrapperHeight / Math.floor(scrollBoxHeight / colorBoxHeight),
+        },
       }));
     }
   }, [sizes.wrapperHeight, sizes.documentHeight]);
@@ -65,14 +77,15 @@ const MarkedHtml = ({html: htmlProp, rules}) => {
   useEffect(() => {
     if (wrapperRef.current && documentRef.current) {
       const scroll = scrollRef.current.getBoundingClientRect();
-      setSizes({
+      setSizes((state) => ({
+        ...state,
         documentHeight: documentRef.current.scrollHeight,
         wrapperHeight: wrapperRef.current.clientHeight,
         scrollPlace: {
           top: scroll.top,
           height: scroll.height,
         },
-      });
+      }));
     }
   }, []);
 
@@ -82,10 +95,6 @@ const MarkedHtml = ({html: htmlProp, rules}) => {
         (documentRef.current.scrollTop / sizes.documentHeight) * 100 + "%";
     });
   }, [sizes.documentHeight]);
-
-  // const dragStart = useCallback((event) => {
-  //   event.dataTransfer.setDragImage(event.target, window.outerWidth, window.outerHeight);
-  // }, []);
 
   const mouseMoveHandler = useCallback(
     (e) => {
@@ -97,8 +106,15 @@ const MarkedHtml = ({html: htmlProp, rules}) => {
         newTopPosition = sizes.wrapperHeight - sizes.scrollBoxHeight;
       }
       scrollBoxRef.current.style.top = newTopPosition + "px";
+      documentRef.current.scrollTop =
+        (newTopPosition / sizes.wrapperHeight) * sizes.documentHeight;
     },
-    [sizes.scrollBoxHeight, sizes.scrollPlace.top, sizes.wrapperHeight]
+    [
+      sizes.documentHeight,
+      sizes.scrollBoxHeight,
+      sizes.scrollPlace.top,
+      sizes.wrapperHeight,
+    ]
   );
 
   const mouseUpHandler = useCallback(() => {
@@ -121,14 +137,14 @@ const MarkedHtml = ({html: htmlProp, rules}) => {
   );
 
   useEffect(() => {
-    // document.addEventListener("dragstart", dragStart);
     document.addEventListener("mousedown", mouseDownHandler);
 
     return () => {
-      // document.removeEventListener("dragstart", dragStart);
       document.removeEventListener("mousedown", mouseDownHandler);
     };
   }, [mouseDownHandler]);
+
+  console.log(sizes);
 
   return (
     <div className={"marked-html-wrapper"} ref={wrapperRef}>
