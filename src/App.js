@@ -1,25 +1,27 @@
-import logo from './logo.svg';
-import './App.css';
+import React, {useEffect, useRef} from "react";
+import {text} from "./text";
+import Mark from "mark.js/src/vanilla";
+const App = () => {
+  const ref = useRef();
+  useEffect(() => {
+    const options = {
+      element: "span",
+      className: "markBlue",
+      separateWordSearch: true,
+      wildcards: "enabled",
+      // accuracy: "exactly",
+    };
+    const ctx = new Mark(ref.current);
+    ctx.unmark({
+      done: function () {
+        ctx.mark("js need", options);
+      },
+    });
+  }, []);
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+  return <div ref={ref} dangerouslySetInnerHTML={{__html: text}} />;
+};
 
-export default App;
+App.propTypes = {};
+
+export {App};
