@@ -50,7 +50,7 @@ const MarkedHtml = ({html: htmlProp, rules}) => {
           element: "span",
           className: `mark-${rule.color}`,
         };
-        if (word.indexOf("*") === -1 && word.indexOf("?")) {
+        if (word.indexOf("*") === -1 && word.indexOf("?") === -1) {
           options.accuracy = "exactly";
         } else {
           options.wildcards = "enabled";
