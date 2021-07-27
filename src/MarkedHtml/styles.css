@@ -1,0 +1,59 @@
+.mark-red {
+    background: red;
+}
+.mark-blue {
+    background: blue;
+}
+.mark-green {
+    background: green;
+}
+.mark-yellow {
+    background: yellow;
+}
+.mark-gray {
+    background: lightgray;
+}
+.mark-black {
+    background: black;
+}
+
+::-webkit-scrollbar {
+    display: none;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body, #root {
+    height: 100%;
+    overflow: hidden;
+}
+
+
+.marked-html-wrapper {
+    display: flex;
+    height: 100vh;
+}
+.marked-html-scroll {
+    width: 55px;
+    position: relative;
+}
+.marked-html-scrollbox {
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 1px solid #1589EE;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.marked-html-content {
+    width: calc(100% - 55px);
+    overflow-y: auto;
+}
+
+
+
