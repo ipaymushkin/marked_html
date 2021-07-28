@@ -91,15 +91,16 @@ const MarkedHtml = ({html: htmlProp, rules}) => {
 
   useEffect(() => {
     documentRef.current.addEventListener("scroll", () => {
-      scrollBoxRef.current.style.top =
-        (documentRef.current.scrollTop / sizes.documentHeight) * 100 + "%";
+      if (sizes.documentHeight) {
+        scrollBoxRef.current.style.top =
+          (documentRef.current.scrollTop / sizes.documentHeight) * 100 + "%";
+      }
     });
   }, [sizes.documentHeight]);
 
-  const mouseMoveHandler = useCallback(
-    (e) => {
-      const dy = e.clientY - y.current;
-      let newTopPosition = lastY.current + dy;
+  const setPosition = useCallback(
+    (topPosition) => {
+      let newTopPosition = topPosition;
       if (newTopPosition < sizes.scrollPlace.top) {
         newTopPosition = 0;
       } else if (newTopPosition + sizes.scrollBoxHeight > sizes.wrapperHeight) {
@@ -115,6 +116,15 @@ const MarkedHtml = ({html: htmlProp, rules}) => {
       sizes.scrollPlace.top,
       sizes.wrapperHeight,
     ]
+  );
+
+  const mouseMoveHandler = useCallback(
+    (e) => {
+      const dy = e.clientY - y.current;
+      let newTopPosition = lastY.current + dy;
+      setPosition(newTopPosition);
+    },
+    [setPosition]
   );
 
   const mouseUpHandler = useCallback(() => {
@@ -144,7 +154,18 @@ const MarkedHtml = ({html: htmlProp, rules}) => {
     };
   }, [mouseDownHandler]);
 
-  console.log(sizes);
+  const onScrollClick = useCallback(
+    (e) => {
+      const {clientY} = e;
+      const halfHeight = sizes.scrollBoxHeight / 2;
+      if (clientY + halfHeight < sizes.wrapperHeight && clientY - halfHeight > 0) {
+        setPosition(clientY - halfHeight);
+      } else {
+        setPosition(clientY);
+      }
+    },
+    [setPosition, sizes.scrollBoxHeight, sizes.wrapperHeight]
+  );
 
   return (
     <div className={"marked-html-wrapper"} ref={wrapperRef}>
@@ -153,13 +174,17 @@ const MarkedHtml = ({html: htmlProp, rules}) => {
         ref={documentRef}
         dangerouslySetInnerHTML={{__html: html.current}}
       />
-      <div className={"marked-html-scroll"} ref={scrollRef}>
+      <div className={"marked-html-scroll"} ref={scrollRef} onClick={onScrollClick}>
         {sizes.documentHeight && sizes.wrapperHeight ? (
           <div
             ref={scrollBoxRef}
             className={"marked-html-scrollbox"}
             draggable={true}
             data-scrollbox={true}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
             style={{
               height:
                 sizes.documentHeight > sizes.wrapperHeight

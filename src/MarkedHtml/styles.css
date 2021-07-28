@@ -40,6 +40,7 @@ html, body, #root {
 .marked-html-scroll {
     width: 55px;
     position: relative;
+    cursor: pointer;
 }
 .marked-html-scrollbox {
     width: 100%;
@@ -48,7 +49,6 @@ html, body, #root {
     left: 0;
     border: 1px solid #1589EE;
     border-radius: 4px;
-    cursor: pointer;
 }
 .marked-html-content {
     width: calc(100% - 55px);
