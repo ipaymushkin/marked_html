@@ -2,8 +2,7 @@ import React, {useCallback, useEffect, useRef, useState} from "react";
 import PropTypes from "prop-types";
 import "./styles.css";
 import Mark from "mark.js/src/vanilla";
-
-const colorBoxHeight = 4;
+import ColorBoxes from "MarkedHtml/ColorBoxes";
 
 const createHtml = (html) => {
   if (typeof html === "string") {
@@ -18,7 +17,13 @@ const isElement = (element) => {
   return element instanceof Element || element instanceof HTMLDocument;
 };
 
-const MarkedHtml = ({html: htmlProp, rules}) => {
+const MarkedHtml = ({
+  html: htmlProp,
+  rules,
+  columnCount,
+  onlyUniqColor,
+  colorBoxHeight,
+}) => {
   const html = useRef(createHtml(htmlProp));
   const documentRef = useRef();
   const wrapperRef = useRef();
@@ -26,6 +31,7 @@ const MarkedHtml = ({html: htmlProp, rules}) => {
   const scrollRef = useRef();
   const y = useRef(0);
   const lastY = useRef(0);
+  const [positions, setPositions] = useState({});
 
   const [sizes, setSizes] = useState({
     documentHeight: 0,
@@ -41,6 +47,26 @@ const MarkedHtml = ({html: htmlProp, rules}) => {
       height: 0,
     },
   });
+
+  const handleMarkedElements = useCallback(() => {
+    if (sizes.findingBox.height && sizes.findingBox.width) {
+      const positionsObj = {};
+
+      document.querySelectorAll("[data-markjs]").forEach((el) => {
+        if (el.children.length === 0) {
+          const {top, left} = el.getBoundingClientRect();
+          const row = Math.floor(top / sizes.findingBox.height);
+          const column = Math.floor(left / sizes.findingBox.width);
+          if (!positionsObj[row]) positionsObj[row] = {};
+          if (!positionsObj[row][column]) positionsObj[row][column] = [];
+          if (!onlyUniqColor || positionsObj[row][column].indexOf(el.className) === -1) {
+            positionsObj[row][column].push(el.className);
+          }
+        }
+      });
+      setPositions(positionsObj);
+    }
+  }, [onlyUniqColor, sizes.findingBox.height, sizes.findingBox.width]);
 
   useEffect(() => {
     const ctx = new Mark(documentRef.current);
@@ -58,7 +84,8 @@ const MarkedHtml = ({html: htmlProp, rules}) => {
         ctx.mark(word, options);
       });
     });
-  }, [rules]);
+    handleMarkedElements();
+  }, [handleMarkedElements, rules]);
 
   useEffect(() => {
     if (sizes.wrapperHeight && sizes.documentHeight) {
@@ -67,12 +94,12 @@ const MarkedHtml = ({html: htmlProp, rules}) => {
         ...state,
         scrollBoxHeight,
         findingBox: {
-          width: documentRef.innerWidth / 5,
+          width: documentRef.current.clientWidth / columnCount,
           height: state.wrapperHeight / Math.floor(scrollBoxHeight / colorBoxHeight),
         },
       }));
     }
-  }, [sizes.wrapperHeight, sizes.documentHeight]);
+  }, [sizes.wrapperHeight, sizes.documentHeight, columnCount, colorBoxHeight]);
 
   useEffect(() => {
     if (wrapperRef.current && documentRef.current) {
@@ -175,6 +202,7 @@ const MarkedHtml = ({html: htmlProp, rules}) => {
         dangerouslySetInnerHTML={{__html: html.current}}
       />
       <div className={"marked-html-scroll"} ref={scrollRef} onClick={onScrollClick}>
+        <ColorBoxes positions={positions} />
         {sizes.documentHeight && sizes.wrapperHeight ? (
           <div
             ref={scrollBoxRef}
@@ -205,7 +233,16 @@ MarkedHtml.propTypes = {
       color: PropTypes.string,
       words: PropTypes.arrayOf(PropTypes.string),
     })
-  ),
+  ).isRequired,
+  columnCount: PropTypes.number,
+  onlyUniqColor: PropTypes.bool,
+  colorBoxHeight: PropTypes.number,
+};
+
+MarkedHtml.defaultProps = {
+  columnCount: 1,
+  onlyUniqColor: true,
+  colorBoxHeight: 4,
 };
 
 export default MarkedHtml;

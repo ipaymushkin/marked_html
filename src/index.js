@@ -7,6 +7,9 @@ ReactDOM.render(
   <React.StrictMode>
     <MarkedHtml
       html={text}
+      columnCount={5}
+      onlyUniqColor={true}
+      colorBoxHeight={4}
       rules={[
         {color: "red", words: ["from", "for"]},
         {color: "blue", words: ["learning"]},
