@@ -1,15 +1,19 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import MarkedHtml from "MarkedHtml";
-import {text} from "text";
+import {text, text1} from "text";
 
 ReactDOM.render(
   <React.StrictMode>
     <MarkedHtml
-      html={text}
+      // html={text}
+      html={text1}
       columnCount={5}
       onlyUniqColor={true}
       colorBoxHeight={4}
+      magnifier={true}
+      magnifierHeight={100}
+      // magnifierHeight={500}
       rules={[
         {color: "red", words: ["from", "for"]},
         {color: "blue", words: ["learning"]},

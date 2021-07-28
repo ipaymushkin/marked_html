@@ -23,14 +23,18 @@ const MarkedHtml = ({
   columnCount,
   onlyUniqColor,
   colorBoxHeight,
+  magnifier,
+  magnifierHeight,
 }) => {
   const html = useRef(createHtml(htmlProp));
   const documentRef = useRef();
   const wrapperRef = useRef();
   const scrollBoxRef = useRef();
   const scrollRef = useRef();
+  const magnifierRef = useRef();
   const y = useRef(0);
   const lastY = useRef(0);
+  const magnifierShow = useRef(false);
   const [positions, setPositions] = useState({});
 
   const [sizes, setSizes] = useState({
@@ -196,6 +200,63 @@ const MarkedHtml = ({
     [setPosition, sizes.scrollBoxHeight, sizes.wrapperHeight]
   );
 
+  const onMouseEnter = useCallback(() => {
+    if (magnifier) {
+      magnifierShow.current = true;
+      magnifierRef.current.style.display = "block";
+      magnifierRef.current.innerHTML = documentRef.current.outerHTML;
+      magnifierRef.current.firstChild.style.position = "absolute";
+    }
+  }, [magnifier]);
+
+  const onMouseLeave = useCallback(() => {
+    if (magnifier) {
+      magnifierShow.current = false;
+      magnifierRef.current.style.display = "none";
+      magnifierRef.current.innerHTML = "";
+    }
+  }, [magnifier]);
+
+  const onMouseMove = useCallback(
+    (e) => {
+      if (magnifier && magnifierShow.current) {
+        let newTop = e.clientY - magnifierHeight / 2;
+        if (newTop < 0) {
+          newTop = 0;
+        } else if (newTop + magnifierHeight > sizes.wrapperHeight) {
+          newTop = sizes.wrapperHeight - magnifierHeight;
+        }
+        magnifierRef.current.style.top = newTop + "px";
+        // console.group("group");
+        // console.log("sizes.documentHeight", sizes.documentHeight);
+        // console.log("newTop", newTop);
+        // console.log("sizes.wrapperHeight", sizes.wrapperHeight);
+        // console.groupEnd();
+        // magnifierRef.current.firstChild.style.top =
+        //   -(sizes.documentHeight * (newTop / sizes.wrapperHeight)) +
+        // (newTop / sizes.wrapperHeight) * magnifierHeight +
+        // "px";
+        // magnifierRef.current.firstChild.style.top =
+        //   -(
+        //     sizes.documentHeight *
+        //     ((newTop + (newTop / sizes.wrapperHeight) * magnifierHeight) /
+        //       sizes.wrapperHeight)
+        //   ) + "px";
+
+        magnifierRef.current.firstChild.style.top =
+          -(sizes.documentHeight * (newTop / sizes.wrapperHeight)) + "px";
+      }
+    },
+    [magnifier, magnifierHeight, sizes.documentHeight, sizes.wrapperHeight]
+  );
+
+  const params = {};
+  if (magnifier) {
+    params.onMouseEnter = onMouseEnter;
+    params.onMouseLeave = onMouseLeave;
+    params.onMouseMove = onMouseMove;
+  }
+
   return (
     <div className={"marked-html-wrapper"} ref={wrapperRef}>
       <div
@@ -203,7 +264,12 @@ const MarkedHtml = ({
         ref={documentRef}
         dangerouslySetInnerHTML={{__html: html.current}}
       />
-      <div className={"marked-html-scroll"} ref={scrollRef} onClick={onScrollClick}>
+      <div
+        className={"marked-html-scroll"}
+        ref={scrollRef}
+        onClick={onScrollClick}
+        {...params}
+      >
         <ColorBoxes
           positions={positions}
           colorBoxHeight={colorBoxHeight}
@@ -220,6 +286,7 @@ const MarkedHtml = ({
               e.preventDefault();
               e.stopPropagation();
             }}
+            onMouseMove={onMouseLeave}
             style={{
               height:
                 sizes.documentHeight > sizes.wrapperHeight
@@ -229,6 +296,13 @@ const MarkedHtml = ({
           />
         ) : null}
       </div>
+      {magnifier && (
+        <div
+          ref={magnifierRef}
+          className={"marked-html-magnifier-box"}
+          style={{height: magnifierHeight + "px"}}
+        />
+      )}
     </div>
   );
 };
@@ -244,12 +318,16 @@ MarkedHtml.propTypes = {
   columnCount: PropTypes.number,
   onlyUniqColor: PropTypes.bool,
   colorBoxHeight: PropTypes.number,
+  magnifier: PropTypes.bool,
+  magnifierHeight: PropTypes.number,
 };
 
 MarkedHtml.defaultProps = {
   columnCount: 1,
   onlyUniqColor: true,
   colorBoxHeight: 4,
+  magnifier: false,
+  magnifierHeight: 100,
 };
 
 export default MarkedHtml;
