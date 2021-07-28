@@ -56,6 +56,13 @@ html, body, #root {
     width: calc(100% - 55px);
     overflow-y: auto;
 }
-
+.marked-html-color-row {
+    width: 100%;
+    display: flex;
+}
+.marked-html-color-cell {
+    display: flex;
+    height: 100%;
+}
 
 

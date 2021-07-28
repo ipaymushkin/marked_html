@@ -46,6 +46,7 @@ const MarkedHtml = ({
       width: 0,
       height: 0,
     },
+    boxesCountByFullHeight: 0,
   });
 
   const handleMarkedElements = useCallback(() => {
@@ -95,8 +96,9 @@ const MarkedHtml = ({
         scrollBoxHeight,
         findingBox: {
           width: documentRef.current.clientWidth / columnCount,
-          height: state.wrapperHeight / Math.floor(scrollBoxHeight / colorBoxHeight),
+          height: state.wrapperHeight / (scrollBoxHeight / colorBoxHeight),
         },
+        boxesCountByFullHeight: Math.floor(sizes.wrapperHeight / colorBoxHeight),
       }));
     }
   }, [sizes.wrapperHeight, sizes.documentHeight, columnCount, colorBoxHeight]);
@@ -202,7 +204,12 @@ const MarkedHtml = ({
         dangerouslySetInnerHTML={{__html: html.current}}
       />
       <div className={"marked-html-scroll"} ref={scrollRef} onClick={onScrollClick}>
-        <ColorBoxes positions={positions} />
+        <ColorBoxes
+          positions={positions}
+          colorBoxHeight={colorBoxHeight}
+          boxesCountByFullHeight={sizes.boxesCountByFullHeight}
+          columnCount={columnCount}
+        />
         {sizes.documentHeight && sizes.wrapperHeight ? (
           <div
             ref={scrollBoxRef}
