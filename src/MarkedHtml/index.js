@@ -17,6 +17,16 @@ const isElement = (element) => {
   return element instanceof Element || element instanceof HTMLDocument;
 };
 
+const getBoxPosition = (clientY, boxHeight, fullHeight) => {
+  let top = clientY - boxHeight / 2;
+  if (top < 0) {
+    top = 0;
+  } else if (top + boxHeight > fullHeight) {
+    top = fullHeight - boxHeight;
+  }
+  return top;
+};
+
 const MarkedHtml = ({
   html: htmlProp,
   rules,
@@ -32,6 +42,7 @@ const MarkedHtml = ({
   const scrollBoxRef = useRef();
   const scrollRef = useRef();
   const magnifierRef = useRef();
+  const miniMagnifierRef = useRef();
   const y = useRef(0);
   const lastY = useRef(0);
   const magnifierShow = useRef(false);
@@ -51,6 +62,7 @@ const MarkedHtml = ({
       height: 0,
     },
     boxesCountByFullHeight: 0,
+    miniMagnifierHeight: 0,
   });
 
   const handleMarkedElements = useCallback(() => {
@@ -103,9 +115,17 @@ const MarkedHtml = ({
           height: state.wrapperHeight / (scrollBoxHeight / colorBoxHeight),
         },
         boxesCountByFullHeight: Math.floor(sizes.wrapperHeight / colorBoxHeight),
+        miniMagnifierHeight:
+          magnifierHeight * (sizes.wrapperHeight / sizes.documentHeight),
       }));
     }
-  }, [sizes.wrapperHeight, sizes.documentHeight, columnCount, colorBoxHeight]);
+  }, [
+    sizes.wrapperHeight,
+    sizes.documentHeight,
+    columnCount,
+    colorBoxHeight,
+    magnifierHeight,
+  ]);
 
   useEffect(() => {
     if (wrapperRef.current && documentRef.current) {
@@ -203,6 +223,7 @@ const MarkedHtml = ({
   const onMouseEnter = useCallback(() => {
     if (magnifier) {
       magnifierShow.current = true;
+      miniMagnifierRef.current.style.display = "block";
       magnifierRef.current.style.display = "block";
       magnifierRef.current.innerHTML = documentRef.current.outerHTML;
       magnifierRef.current.firstChild.style.position = "absolute";
@@ -212,6 +233,7 @@ const MarkedHtml = ({
   const onMouseLeave = useCallback(() => {
     if (magnifier) {
       magnifierShow.current = false;
+      miniMagnifierRef.current.style.display = "none";
       magnifierRef.current.style.display = "none";
       magnifierRef.current.innerHTML = "";
     }
@@ -220,34 +242,29 @@ const MarkedHtml = ({
   const onMouseMove = useCallback(
     (e) => {
       if (magnifier && magnifierShow.current) {
-        let newTop = e.clientY - magnifierHeight / 2;
-        if (newTop < 0) {
-          newTop = 0;
-        } else if (newTop + magnifierHeight > sizes.wrapperHeight) {
-          newTop = sizes.wrapperHeight - magnifierHeight;
-        }
-        magnifierRef.current.style.top = newTop + "px";
-        // console.group("group");
-        // console.log("sizes.documentHeight", sizes.documentHeight);
-        // console.log("newTop", newTop);
-        // console.log("sizes.wrapperHeight", sizes.wrapperHeight);
-        // console.groupEnd();
-        // magnifierRef.current.firstChild.style.top =
-        //   -(sizes.documentHeight * (newTop / sizes.wrapperHeight)) +
-        // (newTop / sizes.wrapperHeight) * magnifierHeight +
-        // "px";
-        // magnifierRef.current.firstChild.style.top =
-        //   -(
-        //     sizes.documentHeight *
-        //     ((newTop + (newTop / sizes.wrapperHeight) * magnifierHeight) /
-        //       sizes.wrapperHeight)
-        //   ) + "px";
-
+        const newMiniMagnifierTop = getBoxPosition(
+          e.clientY,
+          sizes.miniMagnifierHeight,
+          sizes.wrapperHeight
+        );
+        miniMagnifierRef.current.style.top = newMiniMagnifierTop + "px";
+        const newMagnifierTop = getBoxPosition(
+          e.clientY,
+          magnifierHeight,
+          sizes.wrapperHeight
+        );
+        magnifierRef.current.style.top = newMagnifierTop + "px";
         magnifierRef.current.firstChild.style.top =
-          -(sizes.documentHeight * (newTop / sizes.wrapperHeight)) + "px";
+          -(sizes.documentHeight * (newMiniMagnifierTop / sizes.wrapperHeight)) + "px";
       }
     },
-    [magnifier, magnifierHeight, sizes.documentHeight, sizes.wrapperHeight]
+    [
+      magnifier,
+      magnifierHeight,
+      sizes.documentHeight,
+      sizes.miniMagnifierHeight,
+      sizes.wrapperHeight,
+    ]
   );
 
   const params = {};
@@ -296,12 +313,21 @@ const MarkedHtml = ({
           />
         ) : null}
       </div>
-      {magnifier && (
-        <div
-          ref={magnifierRef}
-          className={"marked-html-magnifier-box"}
-          style={{height: magnifierHeight + "px"}}
-        />
+      {magnifier && sizes.miniMagnifierHeight && (
+        <>
+          <div
+            ref={miniMagnifierRef}
+            className={"marked-html-mini-magnifier-box"}
+            style={{
+              height: sizes.miniMagnifierHeight + "px",
+            }}
+          />
+          <div
+            ref={magnifierRef}
+            className={"marked-html-magnifier-box"}
+            style={{height: magnifierHeight + "px"}}
+          />
+        </>
       )}
     </div>
   );

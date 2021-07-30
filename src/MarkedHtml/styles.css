@@ -76,4 +76,13 @@ html, body, #root {
     pointer-events: none;
     overflow: hidden;
 }
+.marked-html-mini-magnifier-box {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 55px;
+    background: rgba(0, 255, 35, 0.2);
+    display: none;
+    pointer-events: none;
+}
 
