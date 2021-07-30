@@ -213,6 +213,8 @@ const MarkedHtml = ({
       const halfHeight = sizes.scrollBoxHeight / 2;
       if (clientY + halfHeight < sizes.wrapperHeight && clientY - halfHeight > 0) {
         setPosition(clientY - halfHeight);
+      } else if (clientY - halfHeight < 0) {
+        setPosition(0);
       } else {
         setPosition(clientY);
       }
