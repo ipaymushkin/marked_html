@@ -1,13 +1,16 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import MarkedHtml from "MarkedHtml";
-import {text, text1} from "text";
+import {text} from "text";
+
+let str = "";
+new Array(10).fill(0).forEach((_) => (str += text));
 
 ReactDOM.render(
   <React.StrictMode>
     <MarkedHtml
       // html={text}
-      html={text1}
+      html={str}
       columnCount={5}
       onlyUniqColor={true}
       colorBoxHeight={4}
