@@ -149,8 +149,6 @@ const MarkedHtml = ({
 
   useEffect(() => {
     if (wrapperRef.current && documentRef.current) {
-      const scroll = scrollRef.current.getBoundingClientRect();
-      // console.log(wrapperRef.current, wrapperRef.current.clientHeight);
       setSizes((state) => ({
         ...state,
         documentHeight: documentRef.current.scrollHeight,
@@ -225,15 +223,11 @@ const MarkedHtml = ({
       const y = e.clientY;
       const clientY = y + window.scrollY - sizes.documentOffset.top;
       const halfHeight = sizes.scrollBoxHeight / 2;
-      console.log(sizes.wrapperHeight, clientY);
       if (clientY + halfHeight < sizes.wrapperHeight && clientY - halfHeight > 0) {
-        console.log("this");
         setPosition(clientY - halfHeight);
       } else if (clientY - halfHeight < 0) {
-        console.log("this1");
         setPosition(0);
       } else {
-        console.log("this2");
         setPosition(clientY);
       }
     },
@@ -262,17 +256,14 @@ const MarkedHtml = ({
   const onMouseMove = useCallback(
     (e) => {
       if (magnifier && magnifierShow.current) {
+        const y = e.clientY + window.scrollY - sizes.documentOffset.top;
         const newMiniMagnifierTop = getBoxPosition(
-          e.clientY,
+          y,
           sizes.miniMagnifierHeight,
           sizes.wrapperHeight
         );
         miniMagnifierRef.current.style.top = newMiniMagnifierTop + "px";
-        const newMagnifierTop = getBoxPosition(
-          e.clientY,
-          magnifierHeight,
-          sizes.wrapperHeight
-        );
+        const newMagnifierTop = getBoxPosition(y, magnifierHeight, sizes.wrapperHeight);
         magnifierRef.current.style.top = newMagnifierTop + "px";
         magnifierRef.current.firstChild.style.top =
           -(sizes.documentHeight * (newMiniMagnifierTop / sizes.wrapperHeight)) + "px";
@@ -282,6 +273,7 @@ const MarkedHtml = ({
       magnifier,
       magnifierHeight,
       sizes.documentHeight,
+      sizes.documentOffset.top,
       sizes.miniMagnifierHeight,
       sizes.wrapperHeight,
     ]
