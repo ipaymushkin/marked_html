@@ -37,6 +37,7 @@ html, body, #root {
     display: flex;
     height: 100%;
     position: relative;
+    overflow: hidden;
 }
 .marked-html-scroll {
     width: 55px;
@@ -44,6 +45,7 @@ html, body, #root {
     cursor: pointer;
     display: flex;
     flex-direction: column;
+    overflow: auto;
 }
 .marked-html-scrollbox {
     width: 100%;

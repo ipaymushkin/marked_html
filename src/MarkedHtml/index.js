@@ -93,7 +93,10 @@ const MarkedHtml = ({
       document.querySelectorAll("[data-markjs]").forEach((el) => {
         if (el.children.length === 0) {
           const {top, left} = el.getBoundingClientRect();
-          const row = Math.floor((top - wrapperTop) / sizes.findingBox.height);
+          const row = Math.floor(
+            ((top - wrapperTop) / sizes.findingBox.height) *
+              (sizes.scrollHeight / sizes.wrapperHeight)
+          );
           const column = Math.floor((left - wrapperLeft) / sizes.findingBox.width);
           if (!positionsObj[row]) positionsObj[row] = {};
           if (!positionsObj[row][column]) positionsObj[row][column] = [];
@@ -133,9 +136,9 @@ const MarkedHtml = ({
           width: documentRef.current.clientWidth / columnCount,
           height: sizes.scrollHeight / (state.scrollBoxHeight / colorBoxHeight),
         },
-        boxesCountByFullHeight: Math.floor(sizes.wrapperHeight / colorBoxHeight),
+        boxesCountByFullHeight: Math.floor(sizes.scrollHeight / colorBoxHeight),
         miniMagnifierHeight:
-          magnifierHeight * (sizes.wrapperHeight / sizes.documentHeight),
+          magnifierHeight * (sizes.scrollHeight / sizes.documentHeight),
       }));
     }
   }, [
@@ -301,7 +304,6 @@ const MarkedHtml = ({
     params.onMouseLeave = onMouseLeave;
     params.onMouseMove = onMouseMove;
   }
-  console.log(sizes);
 
   return (
     <div className={"marked-html-wrapper"} ref={wrapperRef}>
