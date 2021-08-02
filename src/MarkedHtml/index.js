@@ -53,6 +53,7 @@ const MarkedHtml = ({
   colorBoxHeight,
   magnifier,
   magnifierHeight,
+  minBoxHeight,
 }) => {
   const html = useRef(createHtml(htmlProp));
   const documentRef = useRef();
@@ -71,6 +72,7 @@ const MarkedHtml = ({
     documentWidth: 0,
     wrapperHeight: 0,
     scrollBoxHeight: 0,
+    scrollHeight: 0,
     findingBox: {
       width: 0,
       height: 0,
@@ -125,13 +127,11 @@ const MarkedHtml = ({
 
   useEffect(() => {
     if (sizes.wrapperHeight && sizes.documentHeight) {
-      const scrollBoxHeight = scrollBoxRef.current.getBoundingClientRect().height;
       setSizes((state) => ({
         ...state,
-        scrollBoxHeight,
         findingBox: {
           width: documentRef.current.clientWidth / columnCount,
-          height: state.wrapperHeight / (scrollBoxHeight / colorBoxHeight),
+          height: sizes.scrollHeight / (state.scrollBoxHeight / colorBoxHeight),
         },
         boxesCountByFullHeight: Math.floor(sizes.wrapperHeight / colorBoxHeight),
         miniMagnifierHeight:
@@ -144,18 +144,33 @@ const MarkedHtml = ({
     columnCount,
     colorBoxHeight,
     magnifierHeight,
+    sizes.scrollHeight,
   ]);
 
   useEffect(() => {
     if (wrapperRef.current && documentRef.current) {
+      const documentHeight = documentRef.current.scrollHeight;
+      const wrapperHeight = wrapperRef.current.clientHeight;
+      let scrollBoxHeight =
+        documentHeight > wrapperHeight
+          ? (wrapperHeight / documentHeight) * wrapperHeight
+          : wrapperHeight;
+      let scrollHeight = wrapperHeight;
+      if (scrollBoxHeight < minBoxHeight) {
+        scrollHeight = (wrapperHeight * minBoxHeight) / scrollBoxHeight;
+        scrollBoxHeight = minBoxHeight;
+      }
+
       setSizes((state) => ({
         ...state,
-        documentHeight: documentRef.current.scrollHeight,
-        wrapperHeight: wrapperRef.current.clientHeight,
+        documentHeight,
+        wrapperHeight,
+        scrollBoxHeight,
+        scrollHeight,
         documentOffset: getCoords(wrapperRef.current),
       }));
     }
-  }, []);
+  }, [minBoxHeight]);
 
   useEffect(() => {
     documentRef.current.addEventListener("scroll", () => {
@@ -286,6 +301,7 @@ const MarkedHtml = ({
     params.onMouseLeave = onMouseLeave;
     params.onMouseMove = onMouseMove;
   }
+  console.log(sizes);
 
   return (
     <div className={"marked-html-wrapper"} ref={wrapperRef}>
@@ -299,6 +315,7 @@ const MarkedHtml = ({
         ref={scrollRef}
         onClick={onScrollClick}
         {...params}
+        style={{height: sizes.scrollHeight + "px"}}
       >
         <ColorBoxes
           positions={positions}
@@ -318,10 +335,7 @@ const MarkedHtml = ({
             }}
             onMouseMove={onMouseLeave}
             style={{
-              height:
-                sizes.documentHeight > sizes.wrapperHeight
-                  ? `${(sizes.wrapperHeight / sizes.documentHeight) * 100}%`
-                  : "100%",
+              height: sizes.scrollBoxHeight + "px",
             }}
           />
         ) : null}
@@ -359,6 +373,7 @@ MarkedHtml.propTypes = {
   colorBoxHeight: PropTypes.number,
   magnifier: PropTypes.bool,
   magnifierHeight: PropTypes.number,
+  minBoxHeight: PropTypes.number,
 };
 
 MarkedHtml.defaultProps = {
@@ -367,6 +382,7 @@ MarkedHtml.defaultProps = {
   colorBoxHeight: 4,
   magnifier: false,
   magnifierHeight: 100,
+  minBoxHeight: 50,
 };
 
 export default MarkedHtml;

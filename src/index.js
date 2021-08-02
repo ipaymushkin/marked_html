@@ -4,7 +4,7 @@ import MarkedHtml from "MarkedHtml";
 import {text} from "text";
 
 let str = "";
-new Array(1).fill(0).forEach((_) => (str += text));
+new Array(3).fill(0).forEach((_) => (str += text));
 
 ReactDOM.render(
   <React.StrictMode>
@@ -21,6 +21,7 @@ ReactDOM.render(
             colorBoxHeight={4}
             magnifier={true}
             magnifierHeight={100}
+            minBoxHeight={100}
             // magnifierHeight={500}
             rules={[
               {color: "red", words: ["from", "for"]},
