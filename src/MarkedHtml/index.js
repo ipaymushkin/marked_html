@@ -27,6 +27,24 @@ const getBoxPosition = (clientY, boxHeight, fullHeight) => {
   return top;
 };
 
+const getCoords = (elem) => {
+  const box = elem.getBoundingClientRect();
+
+  const body = document.body;
+  const docEl = document.documentElement;
+
+  const scrollTop = window.pageYOffset || docEl.scrollTop || body.scrollTop;
+  const scrollLeft = window.pageXOffset || docEl.scrollLeft || body.scrollLeft;
+
+  const clientTop = docEl.clientTop || body.clientTop || 0;
+  const clientLeft = docEl.clientLeft || body.clientLeft || 0;
+
+  const top = box.top + scrollTop - clientTop;
+  const left = box.left + scrollLeft - clientLeft;
+
+  return {top, left};
+};
+
 const MarkedHtml = ({
   html: htmlProp,
   rules,
@@ -52,10 +70,6 @@ const MarkedHtml = ({
     documentHeight: 0,
     documentWidth: 0,
     wrapperHeight: 0,
-    scrollPlace: {
-      top: 0,
-      height: 0,
-    },
     scrollBoxHeight: 0,
     findingBox: {
       width: 0,
@@ -63,6 +77,10 @@ const MarkedHtml = ({
     },
     boxesCountByFullHeight: 0,
     miniMagnifierHeight: 0,
+    documentOffset: {
+      top: 0,
+      left: 0,
+    },
   });
 
   const handleMarkedElements = useCallback(() => {
@@ -74,6 +92,8 @@ const MarkedHtml = ({
           const {top, left} = el.getBoundingClientRect();
           const row = Math.floor(top / sizes.findingBox.height);
           const column = Math.floor(left / sizes.findingBox.width);
+
+          // console.log(top, left, row, column);
           if (!positionsObj[row]) positionsObj[row] = {};
           if (!positionsObj[row][column]) positionsObj[row][column] = [];
           if (!onlyUniqColor || positionsObj[row][column].indexOf(el.className) === -1) {
@@ -83,7 +103,7 @@ const MarkedHtml = ({
       });
       setPositions(positionsObj);
     }
-  }, [onlyUniqColor, sizes.findingBox.height, sizes.findingBox.width]);
+  }, [sizes.findingBox.height, sizes.findingBox.width, onlyUniqColor]);
 
   useEffect(() => {
     const ctx = new Mark(documentRef.current);
@@ -130,14 +150,12 @@ const MarkedHtml = ({
   useEffect(() => {
     if (wrapperRef.current && documentRef.current) {
       const scroll = scrollRef.current.getBoundingClientRect();
+      // console.log(wrapperRef.current, wrapperRef.current.clientHeight);
       setSizes((state) => ({
         ...state,
         documentHeight: documentRef.current.scrollHeight,
         wrapperHeight: wrapperRef.current.clientHeight,
-        scrollPlace: {
-          top: scroll.top,
-          height: scroll.height,
-        },
+        documentOffset: getCoords(wrapperRef.current),
       }));
     }
   }, []);
@@ -154,7 +172,7 @@ const MarkedHtml = ({
   const setPosition = useCallback(
     (topPosition) => {
       let newTopPosition = topPosition;
-      if (newTopPosition < sizes.scrollPlace.top) {
+      if (newTopPosition < 0) {
         newTopPosition = 0;
       } else if (newTopPosition + sizes.scrollBoxHeight > sizes.wrapperHeight) {
         newTopPosition = sizes.wrapperHeight - sizes.scrollBoxHeight;
@@ -163,12 +181,7 @@ const MarkedHtml = ({
       documentRef.current.scrollTop =
         (newTopPosition / sizes.wrapperHeight) * sizes.documentHeight;
     },
-    [
-      sizes.documentHeight,
-      sizes.scrollBoxHeight,
-      sizes.scrollPlace.top,
-      sizes.wrapperHeight,
-    ]
+    [sizes.documentHeight, sizes.scrollBoxHeight, sizes.wrapperHeight]
   );
 
   const mouseMoveHandler = useCallback(
@@ -209,17 +222,22 @@ const MarkedHtml = ({
 
   const onScrollClick = useCallback(
     (e) => {
-      const {clientY} = e;
+      const y = e.clientY;
+      const clientY = y + window.scrollY - sizes.documentOffset.top;
       const halfHeight = sizes.scrollBoxHeight / 2;
+      console.log(sizes.wrapperHeight, clientY);
       if (clientY + halfHeight < sizes.wrapperHeight && clientY - halfHeight > 0) {
+        console.log("this");
         setPosition(clientY - halfHeight);
       } else if (clientY - halfHeight < 0) {
+        console.log("this1");
         setPosition(0);
       } else {
+        console.log("this2");
         setPosition(clientY);
       }
     },
-    [setPosition, sizes.scrollBoxHeight, sizes.wrapperHeight]
+    [setPosition, sizes.documentOffset.top, sizes.scrollBoxHeight, sizes.wrapperHeight]
   );
 
   const onMouseEnter = useCallback(() => {
@@ -315,7 +333,7 @@ const MarkedHtml = ({
           />
         ) : null}
       </div>
-      {magnifier && sizes.miniMagnifierHeight && (
+      {magnifier && sizes.miniMagnifierHeight ? (
         <>
           <div
             ref={miniMagnifierRef}
@@ -330,7 +348,7 @@ const MarkedHtml = ({
             style={{height: magnifierHeight + "px"}}
           />
         </>
-      )}
+      ) : null}
     </div>
   );
 };

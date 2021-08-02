@@ -29,13 +29,13 @@
 
 html, body, #root {
     height: 100%;
-    overflow: hidden;
+    /*overflow: hidden;*/
 }
 
 
 .marked-html-wrapper {
     display: flex;
-    height: 100vh;
+    height: 100%;
     position: relative;
 }
 .marked-html-scroll {
