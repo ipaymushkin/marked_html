@@ -54,7 +54,7 @@ html, body, #root {
     border-radius: 4px;
 }
 .marked-html-content {
-    width: calc(100% - 55px);
+    width: 100%;
     overflow-y: auto;
 }
 .marked-html-color-row {

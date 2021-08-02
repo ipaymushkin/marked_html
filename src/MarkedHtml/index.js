@@ -86,14 +86,13 @@ const MarkedHtml = ({
   const handleMarkedElements = useCallback(() => {
     if (sizes.findingBox.height && sizes.findingBox.width) {
       const positionsObj = {};
-
+      const wrapperTop = wrapperRef.current.getBoundingClientRect().top;
+      const wrapperLeft = wrapperRef.current.getBoundingClientRect().left;
       document.querySelectorAll("[data-markjs]").forEach((el) => {
         if (el.children.length === 0) {
           const {top, left} = el.getBoundingClientRect();
-          const row = Math.floor(top / sizes.findingBox.height);
-          const column = Math.floor(left / sizes.findingBox.width);
-
-          // console.log(top, left, row, column);
+          const row = Math.floor((top - wrapperTop) / sizes.findingBox.height);
+          const column = Math.floor((left - wrapperLeft) / sizes.findingBox.width);
           if (!positionsObj[row]) positionsObj[row] = {};
           if (!positionsObj[row][column]) positionsObj[row][column] = [];
           if (!onlyUniqColor || positionsObj[row][column].indexOf(el.className) === -1) {
@@ -265,6 +264,9 @@ const MarkedHtml = ({
         miniMagnifierRef.current.style.top = newMiniMagnifierTop + "px";
         const newMagnifierTop = getBoxPosition(y, magnifierHeight, sizes.wrapperHeight);
         magnifierRef.current.style.top = newMagnifierTop + "px";
+        console.log(
+          -(sizes.documentHeight * (newMiniMagnifierTop / sizes.wrapperHeight))
+        );
         magnifierRef.current.firstChild.style.top =
           -(sizes.documentHeight * (newMiniMagnifierTop / sizes.wrapperHeight)) + "px";
       }
