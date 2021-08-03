@@ -107,7 +107,13 @@ const MarkedHtml = ({
       });
       setPositions(positionsObj);
     }
-  }, [sizes.findingBox.height, sizes.findingBox.width, onlyUniqColor]);
+  }, [
+    sizes.findingBox.height,
+    sizes.findingBox.width,
+    sizes.scrollHeight,
+    sizes.wrapperHeight,
+    onlyUniqColor,
+  ]);
 
   useEffect(() => {
     const ctx = new Mark(documentRef.current);
@@ -312,52 +318,54 @@ const MarkedHtml = ({
         ref={documentRef}
         dangerouslySetInnerHTML={{__html: html.current}}
       />
-      <div
-        className={"marked-html-scroll"}
-        ref={scrollRef}
-        onClick={onScrollClick}
-        {...params}
-        style={{height: sizes.scrollHeight + "px"}}
-      >
-        <ColorBoxes
-          positions={positions}
-          colorBoxHeight={colorBoxHeight}
-          boxesCountByFullHeight={sizes.boxesCountByFullHeight}
-          columnCount={columnCount}
-        />
-        {sizes.documentHeight && sizes.wrapperHeight ? (
-          <div
-            ref={scrollBoxRef}
-            className={"marked-html-scrollbox"}
-            draggable={true}
-            data-scrollbox={true}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            onMouseMove={onMouseLeave}
-            style={{
-              height: sizes.scrollBoxHeight + "px",
-            }}
+      <div style={{height: "100%", overflowY: "auto", flex: "0 0 auto"}}>
+        <div
+          className={"marked-html-scroll"}
+          ref={scrollRef}
+          onClick={onScrollClick}
+          {...params}
+          style={{height: sizes.scrollHeight + "px"}}
+        >
+          <ColorBoxes
+            positions={positions}
+            colorBoxHeight={colorBoxHeight}
+            boxesCountByFullHeight={sizes.boxesCountByFullHeight}
+            columnCount={columnCount}
           />
+          {sizes.documentHeight && sizes.wrapperHeight ? (
+            <div
+              ref={scrollBoxRef}
+              className={"marked-html-scrollbox"}
+              draggable={true}
+              data-scrollbox={true}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onMouseMove={onMouseLeave}
+              style={{
+                height: sizes.scrollBoxHeight + "px",
+              }}
+            />
+          ) : null}
+        </div>
+        {magnifier && sizes.miniMagnifierHeight ? (
+          <>
+            <div
+              ref={miniMagnifierRef}
+              className={"marked-html-mini-magnifier-box"}
+              style={{
+                height: sizes.miniMagnifierHeight + "px",
+              }}
+            />
+            <div
+              ref={magnifierRef}
+              className={"marked-html-magnifier-box"}
+              style={{height: magnifierHeight + "px"}}
+            />
+          </>
         ) : null}
       </div>
-      {magnifier && sizes.miniMagnifierHeight ? (
-        <>
-          <div
-            ref={miniMagnifierRef}
-            className={"marked-html-mini-magnifier-box"}
-            style={{
-              height: sizes.miniMagnifierHeight + "px",
-            }}
-          />
-          <div
-            ref={magnifierRef}
-            className={"marked-html-magnifier-box"}
-            style={{height: magnifierHeight + "px"}}
-          />
-        </>
-      ) : null}
     </div>
   );
 };
