@@ -40,7 +40,6 @@ html, body, #root {
     overflow: hidden;
 }
 .marked-html-scroll {
-    width: 55px;
     position: relative;
     cursor: pointer;
     display: flex;
@@ -71,7 +70,6 @@ html, body, #root {
     position: absolute;
     top: 0;
     left: 0;
-    width: calc(100% - 55px);
     /*background: rgba(0, 0, 0, 0.5);*/
     background: purple;
     display: none;
@@ -82,7 +80,6 @@ html, body, #root {
     position: absolute;
     top: 0;
     right: 0;
-    width: 55px;
     background: rgba(0, 255, 35, 0.2);
     display: none;
     pointer-events: none;

@@ -54,6 +54,7 @@ const MarkedHtml = ({
   magnifier,
   magnifierHeight,
   minBoxHeight,
+  scrollWidth,
 }) => {
   const html = useRef(createHtml(htmlProp));
   const documentRef = useRef();
@@ -324,7 +325,7 @@ const MarkedHtml = ({
           ref={scrollRef}
           onClick={onScrollClick}
           {...params}
-          style={{height: sizes.scrollHeight + "px"}}
+          style={{height: sizes.scrollHeight + "px", width: scrollWidth + "px"}}
         >
           <ColorBoxes
             positions={positions}
@@ -356,12 +357,16 @@ const MarkedHtml = ({
               className={"marked-html-mini-magnifier-box"}
               style={{
                 height: sizes.miniMagnifierHeight + "px",
+                width: scrollWidth + "px",
               }}
             />
             <div
               ref={magnifierRef}
               className={"marked-html-magnifier-box"}
-              style={{height: magnifierHeight + "px"}}
+              style={{
+                height: magnifierHeight + "px",
+                width: `calc(100% - ${scrollWidth}px)`,
+              }}
             />
           </>
         ) : null}
@@ -384,6 +389,7 @@ MarkedHtml.propTypes = {
   magnifier: PropTypes.bool,
   magnifierHeight: PropTypes.number,
   minBoxHeight: PropTypes.number,
+  scrollWidth: PropTypes.number,
 };
 
 MarkedHtml.defaultProps = {
@@ -393,6 +399,7 @@ MarkedHtml.defaultProps = {
   magnifier: false,
   magnifierHeight: 100,
   minBoxHeight: 50,
+  scrollWidth: 55,
 };
 
 export default MarkedHtml;

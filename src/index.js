@@ -22,6 +22,7 @@ ReactDOM.render(
             magnifier={true}
             magnifierHeight={100}
             minBoxHeight={100}
+            scrollWidth={100}
             // magnifierHeight={500}
             rules={[
               {color: "red", words: ["from", "for"]},
