@@ -229,7 +229,8 @@ const MarkedHtml = ({
         y.current = e.clientY;
         lastY.current =
           scrollBoxRef.current.getBoundingClientRect().top -
-          wrapperRef.current.getBoundingClientRect().top;
+          wrapperRef.current.getBoundingClientRect().top +
+          scrollRefParent.current.scrollTop;
         document.addEventListener("mousemove", mouseMoveHandler);
         document.addEventListener("mouseup", mouseUpHandler);
       }
@@ -290,13 +291,19 @@ const MarkedHtml = ({
         const newMiniMagnifierTop = getBoxPosition(
           y,
           sizes.miniMagnifierHeight,
-          sizes.wrapperHeight
+          sizes.scrollHeight
         );
         miniMagnifierRef.current.style.top = newMiniMagnifierTop + "px";
-        const newMagnifierTop = getBoxPosition(y, magnifierHeight, sizes.wrapperHeight);
+        const newMagnifierTop = getBoxPosition(y, magnifierHeight, sizes.scrollHeight);
+
         magnifierRef.current.style.top = newMagnifierTop + "px";
+
         magnifierRef.current.firstChild.style.top =
-          -(sizes.documentHeight * (newMiniMagnifierTop / sizes.wrapperHeight)) + "px";
+          -(
+            sizes.documentHeight *
+            ((newMiniMagnifierTop + scrollRefParent.current.scrollTop) /
+              sizes.scrollHeight)
+          ) + "px";
       }
     },
     [
@@ -305,7 +312,7 @@ const MarkedHtml = ({
       sizes.documentHeight,
       sizes.documentOffset.top,
       sizes.miniMagnifierHeight,
-      sizes.wrapperHeight,
+      sizes.scrollHeight,
     ]
   );
 
