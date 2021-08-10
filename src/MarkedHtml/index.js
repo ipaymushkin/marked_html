@@ -420,6 +420,7 @@ MarkedHtml.propTypes = {
   rules: PropTypes.arrayOf(
     PropTypes.shape({
       color: PropTypes.string,
+      backgroundColor: PropTypes.string,
       words: PropTypes.arrayOf(PropTypes.string),
     })
   ).isRequired,
