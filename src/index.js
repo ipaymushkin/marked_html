@@ -7,35 +7,27 @@ let str = "";
 new Array(3).fill(0).forEach((_) => (str += text));
 
 ReactDOM.render(
-  <React.StrictMode>
-    <div style={{display: "flex", flexDirection: "column", overflow: "auto"}}>
-      <div style={{height: "800px", width: "100%"}} />
-      <div style={{display: "flex", flex: "1 1 auto", height: "500px"}}>
-        <div style={{height: "100%", width: "500px"}} />
-        <div style={{width: "calc(100% - 500px)"}}>
-          <MarkedHtml
-            // html={text}
-            html={str}
-            columnCount={5}
-            onlyUniqColor={true}
-            colorBoxHeight={4}
-            magnifier={true}
-            magnifierHeight={100}
-            minBoxHeight={100}
-            scrollWidth={100}
-            // magnifierHeight={500}
-            rules={[
-              {color: "red", words: ["from", "for"]},
-              {color: "blue", words: ["learning"]},
-              {color: "green", words: ["lib*", "crea*"]},
-              {color: "yellow", words: ["*chain", "*bility"]},
-              {color: "gray", words: ["*ebpa*", "*commen*"]},
-              {color: "black", words: ["re?ct", "mo?re"]},
-            ]}
-          />
-        </div>
-      </div>
-    </div>
-  </React.StrictMode>,
+  <MarkedHtml
+    html={str}
+    columnCount={5}
+    onlyUniqColor={true}
+    colorBoxHeight={4}
+    magnifier={true}
+    magnifierHeight={100}
+    minBoxHeight={100}
+    scrollWidth={100}
+    rules={[
+      {
+        backgroundColor: "red",
+        color: "rgb(0,216,40)",
+        words: ["from", "for"],
+      },
+      {backgroundColor: "blue", words: ["learning"]},
+      {backgroundColor: "rgb(1,255,198)", words: ["lib*", "crea*"]},
+      {backgroundColor: "yellow", words: ["*chain", "*bility"]},
+      {backgroundColor: "gray", words: ["*ebpa*", "*commen*"]},
+      {backgroundColor: "black", words: ["re?ct", "mo?re"]},
+    ]}
+  />,
   document.getElementById("root")
 );

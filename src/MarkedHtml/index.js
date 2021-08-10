@@ -102,8 +102,11 @@ const MarkedHtml = ({
           const column = Math.floor((left - wrapperLeft) / sizes.findingBox.width);
           if (!positionsObj[row]) positionsObj[row] = {};
           if (!positionsObj[row][column]) positionsObj[row][column] = [];
-          if (!onlyUniqColor || positionsObj[row][column].indexOf(el.className) === -1) {
-            positionsObj[row][column].push(el.className);
+          if (
+            !onlyUniqColor ||
+            positionsObj[row][column].indexOf(el.style.backgroundColor) === -1
+          ) {
+            positionsObj[row][column].push(el.style.backgroundColor);
           }
         }
       });
@@ -123,7 +126,11 @@ const MarkedHtml = ({
       rule.words.forEach((word) => {
         const options = {
           element: "span",
-          className: `mark-${rule.color}`,
+          className: `marked-element`,
+          each: (el) => {
+            el.style.backgroundColor = rule.backgroundColor;
+            el.style.color = rule.color;
+          },
         };
         if (word.indexOf("*") === -1 && word.indexOf("?") === -1) {
           options.accuracy = "exactly";

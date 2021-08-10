@@ -19,8 +19,11 @@ const ColorBoxes = ({positions, colorBoxHeight, boxesCountByFullHeight, columnCo
                 child = colors.map((color) => (
                   <div
                     key={`box-cell-${row}-${col}-${color}`}
-                    style={{width: 100 / colors.length + "%", height: "100%"}}
-                    className={color}
+                    style={{
+                      width: 100 / colors.length + "%",
+                      height: "100%",
+                      backgroundColor: color,
+                    }}
                   />
                 ));
               }

@@ -1,22 +1,3 @@
-.mark-red {
-    background: red;
-}
-.mark-blue {
-    background: blue;
-}
-.mark-green {
-    background: green;
-}
-.mark-yellow {
-    background: yellow;
-}
-.mark-gray {
-    background: lightgray;
-}
-.mark-black {
-    background: black;
-}
-
 ::-webkit-scrollbar {
     display: none;
 }
