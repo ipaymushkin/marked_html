@@ -183,14 +183,29 @@ const MarkedHtml = ({
     }
   }, [minBoxHeight]);
 
-  useEffect(() => {
-    documentRef.current.addEventListener("scroll", () => {
-      if (sizes.documentHeight) {
-        scrollBoxRef.current.style.top =
-          (documentRef.current.scrollTop / sizes.documentHeight) * 100 + "%";
+  const handleScrollDocument = useCallback(() => {
+    if (sizes.documentHeight) {
+      const topPosition =
+        (documentRef.current.scrollTop / sizes.documentHeight) * sizes.scrollHeight;
+      scrollBoxRef.current.style.top = topPosition + "px";
+      const topWithScroll = topPosition - scrollRefParent.current.scrollTop;
+
+      if (topWithScroll > sizes.wrapperHeight - sizes.scrollBoxHeight) {
+        scrollRefParent.current.scrollTop =
+          (documentRef.current.scrollTop / sizes.documentHeight) * sizes.scrollHeight -
+          sizes.wrapperHeight +
+          sizes.scrollBoxHeight;
+      } else if (topWithScroll < 0) {
+        scrollRefParent.current.scrollTop =
+          (documentRef.current.scrollTop / sizes.documentHeight) * sizes.scrollHeight;
       }
-    });
-  }, [sizes.documentHeight]);
+    }
+  }, [
+    sizes.documentHeight,
+    sizes.scrollBoxHeight,
+    sizes.scrollHeight,
+    sizes.wrapperHeight,
+  ]);
 
   const setPosition = useCallback(
     (topPosition) => {
@@ -240,11 +255,15 @@ const MarkedHtml = ({
 
   useEffect(() => {
     document.addEventListener("mousedown", mouseDownHandler);
+    documentRef.current.addEventListener("scroll", handleScrollDocument);
 
     return () => {
+      if (documentRef.current) {
+        documentRef.current.removeEventListener("scroll", handleScrollDocument);
+      }
       document.removeEventListener("mousedown", mouseDownHandler);
     };
-  }, [mouseDownHandler]);
+  }, [handleScrollDocument, mouseDownHandler]);
 
   const onScrollClick = useCallback(
     (e) => {
