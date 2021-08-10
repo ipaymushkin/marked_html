@@ -44,7 +44,6 @@ html, body, #root {
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
 }
 .marked-html-scrollbox {
     width: 100%;

@@ -61,6 +61,7 @@ const MarkedHtml = ({
   const wrapperRef = useRef();
   const scrollBoxRef = useRef();
   const scrollRef = useRef();
+  const scrollRefParent = useRef();
   const magnifierRef = useRef();
   const miniMagnifierRef = useRef();
   const y = useRef(0);
@@ -196,14 +197,14 @@ const MarkedHtml = ({
       let newTopPosition = topPosition;
       if (newTopPosition < 0) {
         newTopPosition = 0;
-      } else if (newTopPosition + sizes.scrollBoxHeight > sizes.wrapperHeight) {
-        newTopPosition = sizes.wrapperHeight - sizes.scrollBoxHeight;
+      } else if (newTopPosition + sizes.scrollBoxHeight > sizes.scrollHeight) {
+        newTopPosition = sizes.scrollHeight - sizes.scrollBoxHeight;
       }
       scrollBoxRef.current.style.top = newTopPosition + "px";
       documentRef.current.scrollTop =
-        (newTopPosition / sizes.wrapperHeight) * sizes.documentHeight;
+        (newTopPosition / sizes.scrollHeight) * sizes.documentHeight;
     },
-    [sizes.documentHeight, sizes.scrollBoxHeight, sizes.wrapperHeight]
+    [sizes.documentHeight, sizes.scrollBoxHeight, sizes.scrollHeight]
   );
 
   const mouseMoveHandler = useCallback(
@@ -246,10 +247,13 @@ const MarkedHtml = ({
 
   const onScrollClick = useCallback(
     (e) => {
-      const y = e.clientY;
-      const clientY = y + window.scrollY - sizes.documentOffset.top;
+      const clientY =
+        e.clientY +
+        window.scrollY -
+        sizes.documentOffset.top +
+        scrollRefParent.current.scrollTop;
       const halfHeight = sizes.scrollBoxHeight / 2;
-      if (clientY + halfHeight < sizes.wrapperHeight && clientY - halfHeight > 0) {
+      if (clientY + halfHeight < sizes.scrollHeight && clientY - halfHeight > 0) {
         setPosition(clientY - halfHeight);
       } else if (clientY - halfHeight < 0) {
         setPosition(0);
@@ -257,7 +261,7 @@ const MarkedHtml = ({
         setPosition(clientY);
       }
     },
-    [setPosition, sizes.documentOffset.top, sizes.scrollBoxHeight, sizes.wrapperHeight]
+    [setPosition, sizes.documentOffset.top, sizes.scrollBoxHeight, sizes.scrollHeight]
   );
 
   const onMouseEnter = useCallback(() => {
@@ -319,7 +323,10 @@ const MarkedHtml = ({
         ref={documentRef}
         dangerouslySetInnerHTML={{__html: html.current}}
       />
-      <div style={{height: "100%", overflowY: "auto", flex: "0 0 auto"}}>
+      <div
+        style={{height: "100%", overflowY: "auto", flex: "0 0 auto"}}
+        ref={scrollRefParent}
+      >
         <div
           className={"marked-html-scroll"}
           ref={scrollRef}
