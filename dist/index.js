@@ -19,7 +19,7 @@ require("./styles.css");
 
 var _vanilla = _interopRequireDefault(require("mark.js/src/vanilla"));
 
-var _ColorBoxes = _interopRequireDefault(require("MarkedHtml/ColorBoxes"));
+var _ColorBoxes = _interopRequireDefault(require("./ColorBoxes"));
 
 function _getRequireWildcardCache(nodeInterop) {
   if (typeof WeakMap !== "function") return null;
