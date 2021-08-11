@@ -55,6 +55,7 @@ const MarkedHtml = ({
   magnifierHeight,
   minBoxHeight,
   scrollWidth,
+  children,
 }) => {
   const html = useRef(createHtml(htmlProp));
   const documentRef = useRef();
@@ -351,11 +352,18 @@ const MarkedHtml = ({
 
   return (
     <div className={"marked-html-wrapper"} ref={wrapperRef}>
-      <div
-        className={"marked-html-content"}
-        ref={documentRef}
-        dangerouslySetInnerHTML={{__html: html.current}}
-      />
+      {children ? (
+        <div className={"marked-html-content"} ref={documentRef}>
+          {children}
+        </div>
+      ) : (
+        <div
+          className={"marked-html-content"}
+          ref={documentRef}
+          dangerouslySetInnerHTML={{__html: html.current}}
+        />
+      )}
+
       <div
         style={{height: "100%", overflowY: "auto", flex: "0 0 auto"}}
         ref={scrollRefParent}
@@ -416,7 +424,7 @@ const MarkedHtml = ({
 };
 
 MarkedHtml.propTypes = {
-  html: PropTypes.oneOfType([PropTypes.string, PropTypes.element]).isRequired,
+  html: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
   rules: PropTypes.arrayOf(
     PropTypes.shape({
       color: PropTypes.string,
@@ -434,6 +442,7 @@ MarkedHtml.propTypes = {
 };
 
 MarkedHtml.defaultProps = {
+  html: "",
   columnCount: 1,
   onlyUniqColor: true,
   colorBoxHeight: 4,
