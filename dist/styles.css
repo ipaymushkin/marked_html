@@ -1,0 +1,67 @@
+::-webkit-scrollbar {
+    display: none;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body, #root {
+    height: 100%;
+    /*overflow: hidden;*/
+}
+
+
+.marked-html-wrapper {
+    display: flex;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+.marked-html-scroll {
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
+.marked-html-scrollbox {
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 1px solid #1589EE;
+    border-radius: 4px;
+}
+.marked-html-content {
+    width: 100%;
+    overflow-y: auto;
+}
+.marked-html-color-row {
+    width: 100%;
+    display: flex;
+}
+.marked-html-color-cell {
+    display: flex;
+    height: 100%;
+}
+.marked-html-magnifier-box {
+    position: absolute;
+    top: 0;
+    left: 0;
+    /*background: rgba(0, 0, 0, 0.5);*/
+    background: purple;
+    display: none;
+    pointer-events: none;
+    overflow: hidden;
+}
+.marked-html-mini-magnifier-box {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: rgba(0, 255, 35, 0.2);
+    display: none;
+    pointer-events: none;
+}
+
