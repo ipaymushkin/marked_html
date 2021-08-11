@@ -2,7 +2,12 @@ import React from "react";
 import PropTypes from "prop-types";
 
 const ColorBoxes = ({positions, colorBoxHeight, boxesCountByFullHeight, columnCount}) => {
-  if (Object.keys(positions).length === 0 || boxesCountByFullHeight === 0) return null;
+  if (
+    Object.keys(positions).length === 0 ||
+    boxesCountByFullHeight === 0 ||
+    columnCount === 0
+  )
+    return null;
   return (
     <>
       {new Array(boxesCountByFullHeight).fill(0).map((_, row) => {

@@ -56,6 +56,8 @@ const MarkedHtml = ({
   minBoxHeight,
   scrollWidth,
   children,
+  selector,
+  ignoreColumn,
 }) => {
   const html = useRef(createHtml(htmlProp));
   const documentRef = useRef();
@@ -69,6 +71,7 @@ const MarkedHtml = ({
   const lastY = useRef(0);
   const magnifierShow = useRef(false);
   const [positions, setPositions] = useState({});
+  const [colorsObject, setColorsObject] = useState({});
 
   const [sizes, setSizes] = useState({
     documentHeight: 0,
@@ -93,24 +96,52 @@ const MarkedHtml = ({
       const positionsObj = {};
       const wrapperTop = wrapperRef.current.getBoundingClientRect().top;
       const wrapperLeft = wrapperRef.current.getBoundingClientRect().left;
-      document.querySelectorAll("[data-markjs]").forEach((el) => {
+      const elements = document.querySelectorAll(selector || "[data-markjs]");
+
+      const getRow = (top) => {
+        return Math.floor(
+          ((top - wrapperTop) / sizes.findingBox.height) *
+            (sizes.scrollHeight / sizes.wrapperHeight)
+        );
+      };
+
+      const getCol = (left) => {
+        return Math.floor((left - wrapperLeft) / sizes.findingBox.width);
+      };
+
+      let colors = {};
+      if (ignoreColumn) {
+        const colorsSet = new Set();
+        elements.forEach((el) => {
+          if (el.children.length === 0) {
+            const {background} = el.style;
+            colorsSet.add(background);
+          }
+        });
+        let idx = 0;
+        for (let color of colorsSet) {
+          colors[color] = idx;
+          idx += 1;
+        }
+      }
+
+      elements.forEach((el) => {
         if (el.children.length === 0) {
           const {top, left} = el.getBoundingClientRect();
-          const row = Math.floor(
-            ((top - wrapperTop) / sizes.findingBox.height) *
-              (sizes.scrollHeight / sizes.wrapperHeight)
-          );
-          const column = Math.floor((left - wrapperLeft) / sizes.findingBox.width);
+          const {backgroundColor} = el.style;
+          const row = getRow(top);
+          const column = ignoreColumn ? colors[backgroundColor] : getCol(left);
           if (!positionsObj[row]) positionsObj[row] = {};
           if (!positionsObj[row][column]) positionsObj[row][column] = [];
           if (
             !onlyUniqColor ||
-            positionsObj[row][column].indexOf(el.style.backgroundColor) === -1
+            positionsObj[row][column].indexOf(backgroundColor) === -1
           ) {
-            positionsObj[row][column].push(el.style.backgroundColor);
+            positionsObj[row][column].push(backgroundColor);
           }
         }
       });
+      if (ignoreColumn) setColorsObject(colors);
       setPositions(positionsObj);
     }
   }, [
@@ -118,31 +149,35 @@ const MarkedHtml = ({
     sizes.findingBox.width,
     sizes.scrollHeight,
     sizes.wrapperHeight,
+    selector,
+    ignoreColumn,
     onlyUniqColor,
   ]);
 
   useEffect(() => {
-    const ctx = new Mark(documentRef.current);
-    rules.forEach((rule) => {
-      rule.words.forEach((word) => {
-        const options = {
-          element: "span",
-          className: `marked-element`,
-          each: (el) => {
-            el.style.backgroundColor = rule.backgroundColor;
-            el.style.color = rule.color;
-          },
-        };
-        if (word.indexOf("*") === -1 && word.indexOf("?") === -1) {
-          options.accuracy = "exactly";
-        } else {
-          options.wildcards = "enabled";
-        }
-        ctx.mark(word, options);
+    if (!selector) {
+      const ctx = new Mark(documentRef.current);
+      rules.forEach((rule) => {
+        rule.words.forEach((word) => {
+          const options = {
+            element: "span",
+            className: `marked-element`,
+            each: (el) => {
+              el.style.backgroundColor = rule.backgroundColor;
+              el.style.color = rule.color;
+            },
+          };
+          if (word.indexOf("*") === -1 && word.indexOf("?") === -1) {
+            options.accuracy = "exactly";
+          } else {
+            options.wildcards = "enabled";
+          }
+          ctx.mark(word, options);
+        });
       });
-    });
+    }
     handleMarkedElements();
-  }, [handleMarkedElements, rules]);
+  }, [handleMarkedElements, rules, selector]);
 
   useEffect(() => {
     if (sizes.wrapperHeight && sizes.documentHeight) {
@@ -379,7 +414,7 @@ const MarkedHtml = ({
             positions={positions}
             colorBoxHeight={colorBoxHeight}
             boxesCountByFullHeight={sizes.boxesCountByFullHeight}
-            columnCount={columnCount}
+            columnCount={ignoreColumn ? Object.keys(colorsObject).length : columnCount}
           />
           {sizes.documentHeight && sizes.wrapperHeight ? (
             <div
@@ -431,7 +466,7 @@ MarkedHtml.propTypes = {
       backgroundColor: PropTypes.string,
       words: PropTypes.arrayOf(PropTypes.string),
     })
-  ).isRequired,
+  ),
   columnCount: PropTypes.number,
   onlyUniqColor: PropTypes.bool,
   colorBoxHeight: PropTypes.number,
@@ -439,10 +474,13 @@ MarkedHtml.propTypes = {
   magnifierHeight: PropTypes.number,
   minBoxHeight: PropTypes.number,
   scrollWidth: PropTypes.number,
+  selector: PropTypes.string,
+  ignoreColumn: PropTypes.bool,
 };
 
 MarkedHtml.defaultProps = {
   html: "",
+  rules: [],
   columnCount: 1,
   onlyUniqColor: true,
   colorBoxHeight: 4,
@@ -450,6 +488,8 @@ MarkedHtml.defaultProps = {
   magnifierHeight: 100,
   minBoxHeight: 50,
   scrollWidth: 55,
+  selector: "",
+  ignoreColumn: false,
 };
 
 export default MarkedHtml;

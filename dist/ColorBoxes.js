@@ -12,7 +12,12 @@ var ColorBoxes = function ColorBoxes(_ref) {
     colorBoxHeight = _ref.colorBoxHeight,
     boxesCountByFullHeight = _ref.boxesCountByFullHeight,
     columnCount = _ref.columnCount;
-  if (Object.keys(positions).length === 0 || boxesCountByFullHeight === 0) return null;
+  if (
+    Object.keys(positions).length === 0 ||
+    boxesCountByFullHeight === 0 ||
+    columnCount === 0
+  )
+    return null;
   return /*#__PURE__*/ _react.default.createElement(
     _react.default.Fragment,
     null,

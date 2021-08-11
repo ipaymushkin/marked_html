@@ -9,6 +9,10 @@ var _objectSpread2 = _interopRequireDefault(
   require("C:/Projects/marked_html/node_modules/babel-preset-react-app/node_modules/@babel/runtime/helpers/esm/objectSpread2")
 );
 
+var _createForOfIteratorHelper2 = _interopRequireDefault(
+  require("C:/Projects/marked_html/node_modules/babel-preset-react-app/node_modules/@babel/runtime/helpers/esm/createForOfIteratorHelper")
+);
+
 var _slicedToArray2 = _interopRequireDefault(
   require("C:/Projects/marked_html/node_modules/babel-preset-react-app/node_modules/@babel/runtime/helpers/esm/slicedToArray")
 );
@@ -112,7 +116,9 @@ var MarkedHtml = function MarkedHtml(_ref) {
     magnifierHeight = _ref.magnifierHeight,
     minBoxHeight = _ref.minBoxHeight,
     scrollWidth = _ref.scrollWidth,
-    children = _ref.children;
+    children = _ref.children,
+    selector = _ref.selector,
+    ignoreColumn = _ref.ignoreColumn;
   var html = (0, _react.useRef)(createHtml(htmlProp));
   var documentRef = (0, _react.useRef)();
   var wrapperRef = (0, _react.useRef)();
@@ -130,7 +136,12 @@ var MarkedHtml = function MarkedHtml(_ref) {
     positions = _useState2[0],
     setPositions = _useState2[1];
 
-  var _useState3 = (0, _react.useState)({
+  var _useState3 = (0, _react.useState)({}),
+    _useState4 = (0, _slicedToArray2.default)(_useState3, 2),
+    colorsObject = _useState4[0],
+    setColorsObject = _useState4[1];
+
+  var _useState5 = (0, _react.useState)({
       documentHeight: 0,
       documentWidth: 0,
       wrapperHeight: 0,
@@ -147,9 +158,9 @@ var MarkedHtml = function MarkedHtml(_ref) {
         left: 0,
       },
     }),
-    _useState4 = (0, _slicedToArray2.default)(_useState3, 2),
-    sizes = _useState4[0],
-    setSizes = _useState4[1];
+    _useState6 = (0, _slicedToArray2.default)(_useState5, 2),
+    sizes = _useState6[0],
+    setSizes = _useState6[1];
 
   var handleMarkedElements = (0, _react.useCallback)(
     function () {
@@ -157,28 +168,68 @@ var MarkedHtml = function MarkedHtml(_ref) {
         var positionsObj = {};
         var wrapperTop = wrapperRef.current.getBoundingClientRect().top;
         var wrapperLeft = wrapperRef.current.getBoundingClientRect().left;
-        document.querySelectorAll("[data-markjs]").forEach(function (el) {
+        var elements = document.querySelectorAll(selector || "[data-markjs]");
+
+        var getRow = function getRow(top) {
+          return Math.floor(
+            ((top - wrapperTop) / sizes.findingBox.height) *
+              (sizes.scrollHeight / sizes.wrapperHeight)
+          );
+        };
+
+        var getCol = function getCol(left) {
+          return Math.floor((left - wrapperLeft) / sizes.findingBox.width);
+        };
+
+        var colors = {};
+
+        if (ignoreColumn) {
+          var colorsSet = new Set();
+          elements.forEach(function (el) {
+            if (el.children.length === 0) {
+              var background = el.style.background;
+              colorsSet.add(background);
+            }
+          });
+          var idx = 0;
+
+          var _iterator = (0, _createForOfIteratorHelper2.default)(colorsSet),
+            _step;
+
+          try {
+            for (_iterator.s(); !(_step = _iterator.n()).done; ) {
+              var color = _step.value;
+              colors[color] = idx;
+              idx += 1;
+            }
+          } catch (err) {
+            _iterator.e(err);
+          } finally {
+            _iterator.f();
+          }
+        }
+
+        elements.forEach(function (el) {
           if (el.children.length === 0) {
             var _el$getBoundingClient = el.getBoundingClientRect(),
               top = _el$getBoundingClient.top,
               left = _el$getBoundingClient.left;
 
-            var row = Math.floor(
-              ((top - wrapperTop) / sizes.findingBox.height) *
-                (sizes.scrollHeight / sizes.wrapperHeight)
-            );
-            var column = Math.floor((left - wrapperLeft) / sizes.findingBox.width);
+            var backgroundColor = el.style.backgroundColor;
+            var row = getRow(top);
+            var column = ignoreColumn ? colors[backgroundColor] : getCol(left);
             if (!positionsObj[row]) positionsObj[row] = {};
             if (!positionsObj[row][column]) positionsObj[row][column] = [];
 
             if (
               !onlyUniqColor ||
-              positionsObj[row][column].indexOf(el.style.backgroundColor) === -1
+              positionsObj[row][column].indexOf(backgroundColor) === -1
             ) {
-              positionsObj[row][column].push(el.style.backgroundColor);
+              positionsObj[row][column].push(backgroundColor);
             }
           }
         });
+        if (ignoreColumn) setColorsObject(colors);
         setPositions(positionsObj);
       }
     },
@@ -187,35 +238,40 @@ var MarkedHtml = function MarkedHtml(_ref) {
       sizes.findingBox.width,
       sizes.scrollHeight,
       sizes.wrapperHeight,
+      selector,
+      ignoreColumn,
       onlyUniqColor,
     ]
   );
   (0, _react.useEffect)(
     function () {
-      var ctx = new _vanilla.default(documentRef.current);
-      rules.forEach(function (rule) {
-        rule.words.forEach(function (word) {
-          var options = {
-            element: "span",
-            className: "marked-element",
-            each: function each(el) {
-              el.style.backgroundColor = rule.backgroundColor;
-              el.style.color = rule.color;
-            },
-          };
+      if (!selector) {
+        var ctx = new _vanilla.default(documentRef.current);
+        rules.forEach(function (rule) {
+          rule.words.forEach(function (word) {
+            var options = {
+              element: "span",
+              className: "marked-element",
+              each: function each(el) {
+                el.style.backgroundColor = rule.backgroundColor;
+                el.style.color = rule.color;
+              },
+            };
 
-          if (word.indexOf("*") === -1 && word.indexOf("?") === -1) {
-            options.accuracy = "exactly";
-          } else {
-            options.wildcards = "enabled";
-          }
+            if (word.indexOf("*") === -1 && word.indexOf("?") === -1) {
+              options.accuracy = "exactly";
+            } else {
+              options.wildcards = "enabled";
+            }
 
-          ctx.mark(word, options);
+            ctx.mark(word, options);
+          });
         });
-      });
+      }
+
       handleMarkedElements();
     },
-    [handleMarkedElements, rules]
+    [handleMarkedElements, rules, selector]
   );
   (0, _react.useEffect)(
     function () {
@@ -494,7 +550,7 @@ var MarkedHtml = function MarkedHtml(_ref) {
           positions: positions,
           colorBoxHeight: colorBoxHeight,
           boxesCountByFullHeight: sizes.boxesCountByFullHeight,
-          columnCount: columnCount,
+          columnCount: ignoreColumn ? Object.keys(colorsObject).length : columnCount,
         }),
         sizes.documentHeight && sizes.wrapperHeight
           ? /*#__PURE__*/ _react.default.createElement("div", {
@@ -541,6 +597,7 @@ var MarkedHtml = function MarkedHtml(_ref) {
 
 MarkedHtml.defaultProps = {
   html: "",
+  rules: [],
   columnCount: 1,
   onlyUniqColor: true,
   colorBoxHeight: 4,
@@ -548,6 +605,8 @@ MarkedHtml.defaultProps = {
   magnifierHeight: 100,
   minBoxHeight: 50,
   scrollWidth: 55,
+  selector: "",
+  ignoreColumn: false,
 };
 var _default = MarkedHtml;
 exports.default = _default;
