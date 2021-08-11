@@ -2,7 +2,7 @@ import React, {useCallback, useEffect, useRef, useState} from "react";
 import PropTypes from "prop-types";
 import "./styles.css";
 import Mark from "mark.js/src/vanilla";
-import ColorBoxes from "MarkedHtml/ColorBoxes";
+import ColorBoxes from "./ColorBoxes";
 
 const createHtml = (html) => {
   if (typeof html === "string") {
