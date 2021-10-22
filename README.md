@@ -28,7 +28,7 @@ yarn add react-marked-html
 
 | Property | Type | Default Value | Required | Description |
 | --- | --- | --- | --- | --- |
-| `html` | html element or string | empty string | false | html string or html element |
+| `html` | html element or string | empty string | false | html string or html element or react children |
 | `rules` | array | [] | false | array of highlight rules |
 | `columnCount` | number | 1 | false | the number of columns into which the document will be divided
 | `onlyUniqColor` | boolean | true | false | determines whether more than one of the same color should be shown in a cell
@@ -37,9 +37,11 @@ yarn add react-marked-html
 | `magnifierHeight` | number | 100 | false | magnifier height in pixels
 | `minBoxHeight` | number | 50 | false | min height of scroll box
 | `scrollWidth` | number | 55 | false | width of scroll box
-| `children` | any |  | false | any element
-| `selector` | string | empty string | false | any element
-| `ignoreColumn` | boolean | false | false | any element
+| `children` | any | empty | false | react children
+| `selector` | string | empty string | false | if rules is empty, it is possible to give a selector (for example .marked-html)
+| `ignoreColumn` | boolean | false | false | if true - ignore horizontal color boxes position
+| `statCallback` | func | () => null | false | callback for colors statistics
+
 
 ### "rules" property:
 

@@ -3,6 +3,8 @@ import PropTypes from "prop-types";
 import "./styles.css";
 import Mark from "mark.js/src/vanilla";
 import ColorBoxes from "./ColorBoxes";
+import {isMobile} from "react-device-detect";
+import get from "lodash/get";
 
 const createHtml = (html) => {
   if (typeof html === "string") {
@@ -45,6 +47,24 @@ const getCoords = (elem) => {
   return {top, left};
 };
 
+const defaultValues = {
+  documentHeight: 0,
+  documentWidth: 0,
+  wrapperHeight: 0,
+  scrollBoxHeight: 0,
+  scrollHeight: 0,
+  findingBox: {
+    width: 0,
+    height: 0,
+  },
+  boxesCountByFullHeight: 0,
+  miniMagnifierHeight: 0,
+  documentOffset: {
+    top: 0,
+    left: 0,
+  },
+};
+
 const MarkedHtml = ({
   html: htmlProp,
   rules,
@@ -58,6 +78,7 @@ const MarkedHtml = ({
   children,
   selector,
   ignoreColumn,
+  statCallback,
 }) => {
   const html = useRef(createHtml(htmlProp));
   const documentRef = useRef();
@@ -72,31 +93,17 @@ const MarkedHtml = ({
   const magnifierShow = useRef(false);
   const [positions, setPositions] = useState({});
   const [colorsObject, setColorsObject] = useState({});
+  const interval = useRef();
+  const lastHeight = useRef(0);
 
-  const [sizes, setSizes] = useState({
-    documentHeight: 0,
-    documentWidth: 0,
-    wrapperHeight: 0,
-    scrollBoxHeight: 0,
-    scrollHeight: 0,
-    findingBox: {
-      width: 0,
-      height: 0,
-    },
-    boxesCountByFullHeight: 0,
-    miniMagnifierHeight: 0,
-    documentOffset: {
-      top: 0,
-      left: 0,
-    },
-  });
+  const [sizes, setSizes] = useState({...defaultValues});
 
   const handleMarkedElements = useCallback(() => {
     if (sizes.findingBox.height && sizes.findingBox.width) {
       const positionsObj = {};
       const wrapperTop = wrapperRef.current.getBoundingClientRect().top;
       const wrapperLeft = wrapperRef.current.getBoundingClientRect().left;
-      const elements = document.querySelectorAll(selector || "[data-markjs]");
+      const elements = documentRef.current.querySelectorAll(selector || "[data-markjs]");
 
       const getRow = (top) => {
         return Math.floor(
@@ -109,21 +116,28 @@ const MarkedHtml = ({
         return Math.floor((left - wrapperLeft) / sizes.findingBox.width);
       };
 
-      let colors = {};
-      if (ignoreColumn) {
-        const colorsSet = new Set();
-        elements.forEach((el) => {
-          if (el.children.length === 0) {
-            const {background} = el.style;
-            colorsSet.add(background);
+      let colors = {},
+        colorsStat = {};
+      const colorsSet = new Set();
+      elements.forEach((el) => {
+        if (el.children.length === 0) {
+          const {background} = el.style;
+
+          colorsSet.add(background);
+          if (colorsStat[background]) {
+            colorsStat[background] += 1;
+          } else {
+            colorsStat[background] = 1;
           }
-        });
-        let idx = 0;
-        for (let color of colorsSet) {
-          colors[color] = idx;
-          idx += 1;
         }
+      });
+      let idx = 0;
+      for (let color of colorsSet) {
+        colors[color] = idx;
+        idx += 1;
       }
+
+      statCallback(colorsStat);
 
       elements.forEach((el) => {
         if (el.children.length === 0) {
@@ -150,6 +164,7 @@ const MarkedHtml = ({
     sizes.scrollHeight,
     sizes.wrapperHeight,
     selector,
+    statCallback,
     ignoreColumn,
     onlyUniqColor,
   ]);
@@ -201,30 +216,47 @@ const MarkedHtml = ({
     sizes.scrollHeight,
   ]);
 
+  const initialize = useCallback(() => {
+    setSizes((state) => ({...defaultValues}));
+    const documentHeight = get(documentRef, "current.scrollHeight", 0);
+    const wrapperHeight = get(wrapperRef, "current.clientHeight", 0);
+    let scrollBoxHeight =
+      documentHeight > wrapperHeight
+        ? (wrapperHeight / documentHeight) * wrapperHeight
+        : wrapperHeight;
+    let scrollHeight = wrapperHeight;
+    if (scrollBoxHeight < minBoxHeight) {
+      scrollHeight = (wrapperHeight * minBoxHeight) / scrollBoxHeight;
+      scrollBoxHeight = minBoxHeight;
+    }
+
+    setSizes((state) => ({
+      ...state,
+      documentHeight,
+      wrapperHeight,
+      scrollBoxHeight,
+      scrollHeight,
+      documentOffset: getCoords(wrapperRef.current),
+    }));
+  }, [minBoxHeight]);
+
+  const checkHeight = useCallback(() => {
+    interval.current = setInterval(() => {
+      const height = documentRef.current.scrollHeight;
+      if (height !== lastHeight.current) {
+        initialize();
+        lastHeight.current = height;
+      }
+    }, 500);
+  }, [initialize]);
+
   useEffect(() => {
     if (wrapperRef.current && documentRef.current) {
-      const documentHeight = documentRef.current.scrollHeight;
-      const wrapperHeight = wrapperRef.current.clientHeight;
-      let scrollBoxHeight =
-        documentHeight > wrapperHeight
-          ? (wrapperHeight / documentHeight) * wrapperHeight
-          : wrapperHeight;
-      let scrollHeight = wrapperHeight;
-      if (scrollBoxHeight < minBoxHeight) {
-        scrollHeight = (wrapperHeight * minBoxHeight) / scrollBoxHeight;
-        scrollBoxHeight = minBoxHeight;
-      }
-
-      setSizes((state) => ({
-        ...state,
-        documentHeight,
-        wrapperHeight,
-        scrollBoxHeight,
-        scrollHeight,
-        documentOffset: getCoords(wrapperRef.current),
-      }));
+      initialize();
+      lastHeight.current = documentRef.current.scrollHeight;
+      checkHeight();
     }
-  }, [minBoxHeight]);
+  }, [checkHeight, initialize]);
 
   const handleScrollDocument = useCallback(() => {
     if (sizes.documentHeight) {
@@ -297,13 +329,16 @@ const MarkedHtml = ({
   );
 
   useEffect(() => {
+    return () => clearInterval(interval.current);
+  }, []);
+
+  useEffect(() => {
     document.addEventListener("mousedown", mouseDownHandler);
-    documentRef.current.addEventListener("scroll", handleScrollDocument);
+    const doc = documentRef.current;
+    doc.addEventListener("scroll", handleScrollDocument);
 
     return () => {
-      if (documentRef.current) {
-        documentRef.current.removeEventListener("scroll", handleScrollDocument);
-      }
+      doc.removeEventListener("scroll", handleScrollDocument);
       document.removeEventListener("mousedown", mouseDownHandler);
     };
   }, [handleScrollDocument, mouseDownHandler]);
@@ -386,7 +421,7 @@ const MarkedHtml = ({
   }
 
   return (
-    <div className={"marked-html-wrapper"} ref={wrapperRef}>
+    <div className={"marked-html-wrapper"} ref={wrapperRef} id={"marked-html"}>
       {children ? (
         <div className={"marked-html-content"} ref={documentRef}>
           {children}
@@ -399,16 +434,16 @@ const MarkedHtml = ({
         />
       )}
 
-      <div
-        style={{height: "100%", overflowY: "auto", flex: "0 0 auto"}}
-        ref={scrollRefParent}
-      >
+      <div className={"marked-html-scroll-parent"} ref={scrollRefParent}>
         <div
           className={"marked-html-scroll"}
           ref={scrollRef}
           onClick={onScrollClick}
           {...params}
-          style={{height: sizes.scrollHeight + "px", width: scrollWidth + "px"}}
+          style={{
+            height: sizes.scrollHeight + "px",
+            width: scrollWidth + "px",
+          }}
         >
           <ColorBoxes
             positions={positions}
@@ -476,6 +511,7 @@ MarkedHtml.propTypes = {
   scrollWidth: PropTypes.number,
   selector: PropTypes.string,
   ignoreColumn: PropTypes.bool,
+  statCallback: PropTypes.func,
 };
 
 MarkedHtml.defaultProps = {
@@ -487,9 +523,10 @@ MarkedHtml.defaultProps = {
   magnifier: false,
   magnifierHeight: 100,
   minBoxHeight: 50,
-  scrollWidth: 55,
+  scrollWidth: isMobile ? 30 : 55,
   selector: "",
   ignoreColumn: false,
+  statCallback: () => null,
 };
 
 export default MarkedHtml;

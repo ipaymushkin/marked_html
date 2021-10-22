@@ -5,12 +5,12 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-var _objectSpread2 = _interopRequireDefault(
-  require("C:/Projects/marked_html/node_modules/babel-preset-react-app/node_modules/@babel/runtime/helpers/esm/objectSpread2")
-);
-
 var _createForOfIteratorHelper2 = _interopRequireDefault(
   require("C:/Projects/marked_html/node_modules/babel-preset-react-app/node_modules/@babel/runtime/helpers/esm/createForOfIteratorHelper")
+);
+
+var _objectSpread2 = _interopRequireDefault(
+  require("C:/Projects/marked_html/node_modules/babel-preset-react-app/node_modules/@babel/runtime/helpers/esm/objectSpread2")
 );
 
 var _slicedToArray2 = _interopRequireDefault(
@@ -24,6 +24,10 @@ require("./styles.css");
 var _vanilla = _interopRequireDefault(require("mark.js/src/vanilla"));
 
 var _ColorBoxes = _interopRequireDefault(require("./ColorBoxes"));
+
+var _reactDeviceDetect = require("react-device-detect");
+
+var _get = _interopRequireDefault(require("lodash/get"));
 
 function _getRequireWildcardCache(nodeInterop) {
   if (typeof WeakMap !== "function") return null;
@@ -106,6 +110,24 @@ var getCoords = function getCoords(elem) {
   };
 };
 
+var defaultValues = {
+  documentHeight: 0,
+  documentWidth: 0,
+  wrapperHeight: 0,
+  scrollBoxHeight: 0,
+  scrollHeight: 0,
+  findingBox: {
+    width: 0,
+    height: 0,
+  },
+  boxesCountByFullHeight: 0,
+  miniMagnifierHeight: 0,
+  documentOffset: {
+    top: 0,
+    left: 0,
+  },
+};
+
 var MarkedHtml = function MarkedHtml(_ref) {
   var htmlProp = _ref.html,
     rules = _ref.rules,
@@ -118,7 +140,8 @@ var MarkedHtml = function MarkedHtml(_ref) {
     scrollWidth = _ref.scrollWidth,
     children = _ref.children,
     selector = _ref.selector,
-    ignoreColumn = _ref.ignoreColumn;
+    ignoreColumn = _ref.ignoreColumn,
+    statCallback = _ref.statCallback;
   var html = (0, _react.useRef)(createHtml(htmlProp));
   var documentRef = (0, _react.useRef)();
   var wrapperRef = (0, _react.useRef)();
@@ -141,23 +164,10 @@ var MarkedHtml = function MarkedHtml(_ref) {
     colorsObject = _useState4[0],
     setColorsObject = _useState4[1];
 
-  var _useState5 = (0, _react.useState)({
-      documentHeight: 0,
-      documentWidth: 0,
-      wrapperHeight: 0,
-      scrollBoxHeight: 0,
-      scrollHeight: 0,
-      findingBox: {
-        width: 0,
-        height: 0,
-      },
-      boxesCountByFullHeight: 0,
-      miniMagnifierHeight: 0,
-      documentOffset: {
-        top: 0,
-        left: 0,
-      },
-    }),
+  var interval = (0, _react.useRef)();
+  var lastHeight = (0, _react.useRef)(0);
+
+  var _useState5 = (0, _react.useState)((0, _objectSpread2.default)({}, defaultValues)),
     _useState6 = (0, _slicedToArray2.default)(_useState5, 2),
     sizes = _useState6[0],
     setSizes = _useState6[1];
@@ -168,7 +178,7 @@ var MarkedHtml = function MarkedHtml(_ref) {
         var positionsObj = {};
         var wrapperTop = wrapperRef.current.getBoundingClientRect().top;
         var wrapperLeft = wrapperRef.current.getBoundingClientRect().left;
-        var elements = document.querySelectorAll(selector || "[data-markjs]");
+        var elements = documentRef.current.querySelectorAll(selector || "[data-markjs]");
 
         var getRow = function getRow(top) {
           return Math.floor(
@@ -181,34 +191,39 @@ var MarkedHtml = function MarkedHtml(_ref) {
           return Math.floor((left - wrapperLeft) / sizes.findingBox.width);
         };
 
-        var colors = {};
+        var colors = {},
+          colorsStat = {};
+        var colorsSet = new Set();
+        elements.forEach(function (el) {
+          if (el.children.length === 0) {
+            var background = el.style.background;
+            colorsSet.add(background);
 
-        if (ignoreColumn) {
-          var colorsSet = new Set();
-          elements.forEach(function (el) {
-            if (el.children.length === 0) {
-              var background = el.style.background;
-              colorsSet.add(background);
+            if (colorsStat[background]) {
+              colorsStat[background] += 1;
+            } else {
+              colorsStat[background] = 1;
             }
-          });
-          var idx = 0;
-
-          var _iterator = (0, _createForOfIteratorHelper2.default)(colorsSet),
-            _step;
-
-          try {
-            for (_iterator.s(); !(_step = _iterator.n()).done; ) {
-              var color = _step.value;
-              colors[color] = idx;
-              idx += 1;
-            }
-          } catch (err) {
-            _iterator.e(err);
-          } finally {
-            _iterator.f();
           }
+        });
+        var idx = 0;
+
+        var _iterator = (0, _createForOfIteratorHelper2.default)(colorsSet),
+          _step;
+
+        try {
+          for (_iterator.s(); !(_step = _iterator.n()).done; ) {
+            var color = _step.value;
+            colors[color] = idx;
+            idx += 1;
+          }
+        } catch (err) {
+          _iterator.e(err);
+        } finally {
+          _iterator.f();
         }
 
+        statCallback(colorsStat);
         elements.forEach(function (el) {
           if (el.children.length === 0) {
             var _el$getBoundingClient = el.getBoundingClientRect(),
@@ -239,6 +254,7 @@ var MarkedHtml = function MarkedHtml(_ref) {
       sizes.scrollHeight,
       sizes.wrapperHeight,
       selector,
+      statCallback,
       ignoreColumn,
       onlyUniqColor,
     ]
@@ -302,38 +318,62 @@ var MarkedHtml = function MarkedHtml(_ref) {
       sizes.scrollHeight,
     ]
   );
+  var initialize = (0, _react.useCallback)(
+    function () {
+      setSizes(function (state) {
+        return (0, _objectSpread2.default)({}, defaultValues);
+      });
+      var documentHeight = (0, _get.default)(documentRef, "current.scrollHeight", 0);
+      var wrapperHeight = (0, _get.default)(wrapperRef, "current.clientHeight", 0);
+      var scrollBoxHeight =
+        documentHeight > wrapperHeight
+          ? (wrapperHeight / documentHeight) * wrapperHeight
+          : wrapperHeight;
+      var scrollHeight = wrapperHeight;
+
+      if (scrollBoxHeight < minBoxHeight) {
+        scrollHeight = (wrapperHeight * minBoxHeight) / scrollBoxHeight;
+        scrollBoxHeight = minBoxHeight;
+      }
+
+      setSizes(function (state) {
+        return (0, _objectSpread2.default)(
+          (0, _objectSpread2.default)({}, state),
+          {},
+          {
+            documentHeight: documentHeight,
+            wrapperHeight: wrapperHeight,
+            scrollBoxHeight: scrollBoxHeight,
+            scrollHeight: scrollHeight,
+            documentOffset: getCoords(wrapperRef.current),
+          }
+        );
+      });
+    },
+    [minBoxHeight]
+  );
+  var checkHeight = (0, _react.useCallback)(
+    function () {
+      interval.current = setInterval(function () {
+        var height = documentRef.current.scrollHeight;
+
+        if (height !== lastHeight.current) {
+          initialize();
+          lastHeight.current = height;
+        }
+      }, 500);
+    },
+    [initialize]
+  );
   (0, _react.useEffect)(
     function () {
       if (wrapperRef.current && documentRef.current) {
-        var documentHeight = documentRef.current.scrollHeight;
-        var wrapperHeight = wrapperRef.current.clientHeight;
-        var scrollBoxHeight =
-          documentHeight > wrapperHeight
-            ? (wrapperHeight / documentHeight) * wrapperHeight
-            : wrapperHeight;
-        var scrollHeight = wrapperHeight;
-
-        if (scrollBoxHeight < minBoxHeight) {
-          scrollHeight = (wrapperHeight * minBoxHeight) / scrollBoxHeight;
-          scrollBoxHeight = minBoxHeight;
-        }
-
-        setSizes(function (state) {
-          return (0, _objectSpread2.default)(
-            (0, _objectSpread2.default)({}, state),
-            {},
-            {
-              documentHeight: documentHeight,
-              wrapperHeight: wrapperHeight,
-              scrollBoxHeight: scrollBoxHeight,
-              scrollHeight: scrollHeight,
-              documentOffset: getCoords(wrapperRef.current),
-            }
-          );
-        });
+        initialize();
+        lastHeight.current = documentRef.current.scrollHeight;
+        checkHeight();
       }
     },
-    [minBoxHeight]
+    [checkHeight, initialize]
   );
   var handleScrollDocument = (0, _react.useCallback)(
     function () {
@@ -404,15 +444,18 @@ var MarkedHtml = function MarkedHtml(_ref) {
     },
     [mouseMoveHandler, mouseUpHandler]
   );
+  (0, _react.useEffect)(function () {
+    return function () {
+      return clearInterval(interval.current);
+    };
+  }, []);
   (0, _react.useEffect)(
     function () {
       document.addEventListener("mousedown", mouseDownHandler);
-      documentRef.current.addEventListener("scroll", handleScrollDocument);
+      var doc = documentRef.current;
+      doc.addEventListener("scroll", handleScrollDocument);
       return function () {
-        if (documentRef.current) {
-          documentRef.current.removeEventListener("scroll", handleScrollDocument);
-        }
-
+        doc.removeEventListener("scroll", handleScrollDocument);
         document.removeEventListener("mousedown", mouseDownHandler);
       };
     },
@@ -503,6 +546,7 @@ var MarkedHtml = function MarkedHtml(_ref) {
     {
       className: "marked-html-wrapper",
       ref: wrapperRef,
+      id: "marked-html",
     },
     children
       ? /*#__PURE__*/ _react.default.createElement(
@@ -523,11 +567,7 @@ var MarkedHtml = function MarkedHtml(_ref) {
     /*#__PURE__*/ _react.default.createElement(
       "div",
       {
-        style: {
-          height: "100%",
-          overflowY: "auto",
-          flex: "0 0 auto",
-        },
+        className: "marked-html-scroll-parent",
         ref: scrollRefParent,
       },
       /*#__PURE__*/ _react.default.createElement(
@@ -604,9 +644,12 @@ MarkedHtml.defaultProps = {
   magnifier: false,
   magnifierHeight: 100,
   minBoxHeight: 50,
-  scrollWidth: 55,
+  scrollWidth: _reactDeviceDetect.isMobile ? 30 : 55,
   selector: "",
   ignoreColumn: false,
+  statCallback: function statCallback() {
+    return null;
+  },
 };
 var _default = MarkedHtml;
 exports.default = _default;
